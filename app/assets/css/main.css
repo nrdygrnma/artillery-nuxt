@@ -1,0 +1,16 @@
+@import "tailwindcss" theme(static);
+@import "@nuxt/ui";
+
+@theme {
+  --font-sans: "Public Sans", sans-serif;
+  --color-mint-500: oklch(0.72 0.11 178);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+h1 {
+  font-size: 48px;
+  color: var(--color-primary-500);
+}
