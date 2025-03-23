@@ -1,6 +1,24 @@
-# Nuxt UI Starter
+# Nuxt Artillery Load Test App
 
-Look at [Nuxt docs](https://nuxt.com/docs/getting-started/introduction) and [Nuxt UI docs](https://ui.nuxt.com) to learn more.
+Welcome to the Nuxt Artillery Load Test App! This project demonstrates how to build a user interface using Nuxt.js and Vue 3 for managing and executing load tests with Artillery.
+
+## Table of Contents
+
+- [Features](#features)
+- [Setup](#setup)
+- [Development Server](#development-server)
+- [File Uploads](#file-uploads)
+- [Viewing Uploaded Tests](#viewing-uploaded-tests)
+- [Production](#production)
+- [Deployment](#deployment)
+- [License](#license)
+
+## Features
+
+- Upload Artillery test scripts with metadata (upload date).
+- View a list of uploaded test scripts with their names and upload dates.
+- Execute load tests directly from the interface.
+- Responsive design using Tailwind CSS.
 
 ## Setup
 
@@ -18,58 +36,3 @@ yarn install
 
 # bun
 bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm run dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm run build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm run preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
