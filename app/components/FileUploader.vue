@@ -10,26 +10,17 @@
 
     <UButton icon="eva:upload-outline" @click="uploadFile"> Upload </UButton>
 
-    <UProgress v-if="uploadProgress > 0" :value="uploadProgress" max="100" />
     <div v-if="isLoading">Loading...</div>
   </UCard>
 </template>
 
 <script lang="ts" setup>
 import { ref } from "vue";
-
-interface ApiResponse {
-  success: boolean;
-  message?: string;
-  files?: string[];
-  filename?: string;
-  uploadedDate?: string;
-}
+import type { FileOperationResponse } from "~~/types";
 
 const file = ref<File | null>(null);
 const toast = useToast();
 const isLoading = ref(false);
-const uploadProgress = ref(0);
 
 const emit = defineEmits<{
   (e: "fileUploaded", newFile: string, uploadedDate: string): void;
@@ -50,15 +41,13 @@ const uploadFile = async () => {
   formData.append("file", file.value);
 
   isLoading.value = true;
-  uploadProgress.value = 0;
 
-  const { data, error } = await useFetch<ApiResponse>("/api/upload", {
+  const { data, error } = await useFetch<FileOperationResponse>("/api/upload", {
     method: "POST",
     body: formData,
   });
 
   isLoading.value = false;
-  uploadProgress.value = 0;
 
   if (error.value) {
     showToast("Error", "Error uploading file", "warning");

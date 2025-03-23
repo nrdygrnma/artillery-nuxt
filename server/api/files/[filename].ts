@@ -5,10 +5,14 @@ import {defineEventHandler, getRouterParam} from 'h3';
 const metadataFilePath = path.resolve('public/uploads', 'metadata.json');
 
 export default defineEventHandler(async (event) => {
-    const filename = getRouterParam(event, 'filename');
+    const encodedFilename = getRouterParam(event, 'filename');
+    if (!encodedFilename) {
+        return { success: false, message: 'Filename is required' };
+    }
 
-    if (!filename) {
-        return {success: false, message: 'Filename is required'};
+    const filename = decodeURIComponent(encodedFilename);
+    if (!filename || filename === '') {
+        return { success: false, message: 'Invalid filename' };
     }
 
     console.log(`Deleting file: ${filename}`);
@@ -24,15 +28,15 @@ export default defineEventHandler(async (event) => {
 
             fs.writeFileSync(metadataFilePath, JSON.stringify(updatedMetadata, null, 2));
 
-            return {success: true, message: `File ${filename} deleted successfully`};
+            return { success: true, message: `File ${filename} deleted successfully` };
         } else {
-            return {success: false, message: 'File not found'};
+            return { success: false, message: 'File not found' };
         }
     } catch (error) {
         if (error instanceof Error) {
-            return {success: false, message: 'Error deleting file', error: error.message};
+            return { success: false, message: 'Error deleting file', error: error.message };
         } else {
-            return {success: false, message: 'Unknown error deleting file'};
+            return { success: false, message: 'Unknown error deleting file' };
         }
     }
 });
