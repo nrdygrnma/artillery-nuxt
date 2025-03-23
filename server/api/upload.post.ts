@@ -1,9 +1,11 @@
-import {defineEventHandler, H3Event, readMultipartFormData} from "h3";
-import {promises as fs} from "fs";
+import { defineEventHandler, H3Event, readMultipartFormData } from "h3";
+import { promises as fs } from "fs";
 import path from "path";
 
-const UPLOAD_DIR = path.resolve("public/uploads");
-const METADATA_FILE = path.resolve("public/uploads/metadata.json");
+const uploadDir = path.resolve("public/uploads");
+const metadataFilePath = path.resolve(uploadDir, "metadata.json");
+
+const ALLOWED_EXTENSIONS = [".yaml", ".yml"];
 
 export default defineEventHandler(async (event: H3Event) => {
   const files = await readMultipartFormData(event);
@@ -16,7 +18,15 @@ export default defineEventHandler(async (event: H3Event) => {
     return { success: false, message: "Invalid file" };
   }
 
-  const filePath = path.join(UPLOAD_DIR, file.filename);
+  const fileExt = path.extname(file.filename).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
+    return {
+      success: false,
+      message: "Only YAML files (.yaml, .yml) are allowed",
+    };
+  }
+
+  const filePath = path.join(uploadDir, file.filename);
   await fs.writeFile(filePath, file.data);
 
   const uploadedDate = new Date().toISOString();
@@ -24,7 +34,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   let existingMetadata = [];
   try {
-    const data = await fs.readFile(METADATA_FILE, "utf-8");
+    const data = await fs.readFile(metadataFilePath, "utf-8");
     existingMetadata = JSON.parse(data);
   } catch (error) {
     console.log(error);
@@ -32,7 +42,10 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   existingMetadata.push(metadata);
-  await fs.writeFile(METADATA_FILE, JSON.stringify(existingMetadata, null, 2));
+  await fs.writeFile(
+    metadataFilePath,
+    JSON.stringify(existingMetadata, null, 2),
+  );
 
   return {
     success: true,

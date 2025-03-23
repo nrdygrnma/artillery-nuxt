@@ -23,7 +23,11 @@
 import { h, ref, resolveComponent } from "vue";
 import FileUploader from "~/components/FileUploader.vue";
 import type { TableColumn } from "@nuxt/ui";
-import type { FileItem, FileListResponse } from "~~/types";
+import type {
+  FileItem,
+  FileListResponse,
+  FileOperationResponse,
+} from "~~/types";
 
 const UButton = resolveComponent("UButton");
 const UTooltip = resolveComponent("UTooltip");
@@ -146,7 +150,6 @@ const deleteScript = async (filename: string | undefined) => {
     return;
   }
 
-  console.log("Deleting script:", filename);
   const confirmed = confirm(
     `Are you sure you want to delete the script ${filename}?`,
   );
@@ -154,9 +157,12 @@ const deleteScript = async (filename: string | undefined) => {
     try {
       const encodedFilename = encodeURIComponent(filename);
 
-      const { data, error } = await useFetch(`/api/files/${encodedFilename}`, {
-        method: "DELETE",
-      });
+      const { data, error } = await useFetch<FileOperationResponse>(
+        `/api/files/${encodedFilename}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (data.value && data.value.success) {
         console.log("File deleted successfully:", data.value);
