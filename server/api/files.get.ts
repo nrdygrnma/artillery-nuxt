@@ -1,19 +1,16 @@
-import { defineEventHandler } from "h3";
-import { promises as fs } from "fs";
-import path from "path";
+import fs from 'fs';
+import path from 'path';
+import {defineEventHandler} from 'h3';
 
-const METADATA_FILE = path.resolve("public/uploads/metadata.json");
+const metadataFilePath = path.resolve('public/uploads', 'metadata.json');
 
 export default defineEventHandler(async () => {
   try {
-    const data = await fs.readFile(METADATA_FILE, "utf-8");
-    const files = JSON.parse(data);
-    return { success: true, files };
+    const metadata = JSON.parse(fs.readFileSync(metadataFilePath, 'utf-8'));
+    return { success: true, files: metadata };
   } catch (error) {
-    return {
-      success: false,
-      message: "Could not read files",
-      error: error instanceof Error ? error.message : error,
-    };
+    if (error instanceof Error) {
+      return {success: false, message: 'Error reading metadata', error: error.message};
+    }
   }
 });

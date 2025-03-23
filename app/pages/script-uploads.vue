@@ -16,6 +16,8 @@
                 <FileUploader @fileUploaded="onFileUploaded"/>
             </div>
         </div>
+
+
     </div>
 </template>
 
@@ -34,6 +36,11 @@ type FileItem = {
 interface ApiResponse {
     success: boolean;
     files: { filename: string; uploadedDate: string }[];
+}
+
+interface FetchError {
+    message: string;
+    code: number;
 }
 
 const UButton = resolveComponent('UButton')
@@ -64,8 +71,8 @@ const columns: TableColumn<FileItem>[] = [
     },
     {
         header: "Actions",
-        cell: ({ row }) => {
-            return h('div', { class: 'flex space-x-2' }, [
+        cell: ({row}) => {
+            return h('div', {class: 'flex space-x-2'}, [
                 h(UTooltip, {
                     arrow: true,
                     content: {
@@ -100,7 +107,7 @@ const columns: TableColumn<FileItem>[] = [
                         icon: 'eva:trash-2-outline',
                         size: 'md',
                         class: 'cursor-pointer',
-                        onClick: () => deleteScript(row.original.id),
+                        onClick: () => deleteScript(row.original.name),
                     })
                 }),
             ]);
@@ -142,13 +149,29 @@ const editScript = (fileItem: FileItem) => {
     console.log("Editing script:", fileItem)
 }
 
-const deleteScript = async (id: string) => {
-    const confirmed = confirm("Are you sure you want to delete this script?");
+const deleteScript = async (filename: string) => {
+    const confirmed = confirm(`Are you sure you want to delete the script ${filename}?`);
+
     if (confirmed) {
-        await fetch(`/api/delete/${id}`, {
-            method: "DELETE",
-        });
-        await refreshFiles();
+        try {
+            const {data, error} = await useFetch(`/api/files/${filename}`, {
+                method: "DELETE",
+            });
+
+            if (data.value && data.value.success) {
+                uploadedFiles.value = uploadedFiles.value.filter((file) => file.name !== filename);
+
+                await refreshFiles();
+            } else {
+                console.error("Error deleting file:", error);
+            }
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error("Unexpected error:", err.message);
+            } else {
+                console.error("Unexpected error:", err);
+            }
+        }
     }
 };
 

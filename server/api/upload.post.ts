@@ -1,5 +1,5 @@
-import { defineEventHandler, H3Event, readMultipartFormData } from "h3";
-import { promises as fs } from "fs";
+import {defineEventHandler, H3Event, readMultipartFormData} from "h3";
+import {promises as fs} from "fs";
 import path from "path";
 
 const UPLOAD_DIR = path.resolve("public/uploads");
@@ -22,16 +22,15 @@ export default defineEventHandler(async (event: H3Event) => {
   const uploadedDate = new Date().toISOString();
   const metadata = { filename: file.filename, uploadedDate };
 
-  // Read existing metadata
   let existingMetadata = [];
   try {
     const data = await fs.readFile(METADATA_FILE, "utf-8");
     existingMetadata = JSON.parse(data);
   } catch (error) {
-    // If the file doesn't exist, we can ignore the error
+    console.log(error);
+    return { success: false, message: "Could not create metadata" };
   }
 
-  // Append new metadata
   existingMetadata.push(metadata);
   await fs.writeFile(METADATA_FILE, JSON.stringify(existingMetadata, null, 2));
 
