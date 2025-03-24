@@ -5,7 +5,7 @@
     </template>
 
     <UFormField class="mb-6" label="Select File">
-      <UInput type="file" @change="handleFileChange" />
+      <UInput ref="fileInput" type="file" @change="handleFileChange" />
     </UFormField>
 
     <UButton
@@ -29,6 +29,7 @@ const { showToast } = useAppToast();
 
 const isLoading = ref(false);
 const file = ref<File | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const emit = defineEmits<{
   (e: "fileUploaded", newFile: string, uploadedDate: string): void;
@@ -52,6 +53,7 @@ const startUpload = async () => {
   if (result) {
     emit("fileUploaded", result.filename, result.uploadedDate);
     file.value = null;
+    fileInput.value!.value = "";
   }
 };
 </script>
