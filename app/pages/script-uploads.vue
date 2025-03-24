@@ -22,7 +22,7 @@
 <script lang="ts" setup>
 import { h, ref, resolveComponent } from "vue";
 import { useAppToast } from "~/composables/useAppToast";
-import FileUpload from "~/components/FileUpload.vue";
+import { DeleteModal, FileUpload } from "#components";
 import type { TableColumn } from "@nuxt/ui";
 import type {
   FileItem,
@@ -34,6 +34,7 @@ const { showToast } = useAppToast();
 const UButton = resolveComponent("UButton");
 const UTooltip = resolveComponent("UTooltip");
 
+const overlay = useOverlay();
 const uploadedFiles = ref<FileItem[]>([]);
 
 const columns: TableColumn<FileItem>[] = [
@@ -94,37 +95,31 @@ const editScript = (fileItem: FileItem) => {
   console.log("Editing script:", fileItem);
 };
 
-const deleteScript = async (filename: string) => {
-  if (!filename) {
-    showToast("Error", "Filename is missing or invalid", "error");
-    return;
+const confirmDeleteModal = async (filename: string) => {
+  const modal = overlay.create(DeleteModal, { props: { filename } });
+  const confirmed = await modal.open();
+
+  if (confirmed) {
+    await confirmDelete(filename);
   }
+};
 
-  const confirmed = confirm(
-    `Are you sure you want to delete the script ${filename}?`,
-  );
-  if (!confirmed) return;
-
+const confirmDelete = async (filename: string) => {
   try {
     const encodedFilename = encodeURIComponent(filename);
-
     const { data } = await useFetch<FileOperationResponse>(
       `/api/files/${encodedFilename}`,
-      {
-        method: "DELETE",
-      },
+      { method: "DELETE" },
     );
 
     if (data.value?.success) {
       await refreshFiles();
-      showToast("Success", `File deleted successfully: ${filename}`, "success");
+      showToast("Success", "File deleted successfully", "success");
     } else {
       showToast("Error", data.value?.message || "Delete failed", "error");
     }
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    console.error("Unexpected error:", errorMessage);
-    showToast("Error", `Delete failed: ${errorMessage}`, "error");
+  } catch (err) {
+    console.error("Unexpected error:", err);
   }
 };
 
@@ -132,7 +127,11 @@ const renderActions = (row: any) =>
   h("div", { class: "flex space-x-2" }, [
     h(
       UTooltip,
-      { arrow: true, content: "Edit Script" },
+      {
+        arrow: true,
+        text: "Edit Script",
+        content: { side: "top", sideOffset: 5 },
+      },
       {
         default: () =>
           h(UButton, {
@@ -147,7 +146,12 @@ const renderActions = (row: any) =>
     ),
     h(
       UTooltip,
-      { arrow: true, content: "Delete Script" },
+      {
+        arrow: true,
+        text: "Delete Script",
+        content: { side: "top", sideOffset: 5 },
+      },
+
       {
         default: () =>
           h(UButton, {
@@ -156,7 +160,8 @@ const renderActions = (row: any) =>
             icon: "eva:trash-2-outline",
             size: "md",
             class: "cursor-pointer",
-            onClick: () => row.original.name && deleteScript(row.original.name),
+            onClick: () =>
+              row.original.name && confirmDeleteModal(row.original.name),
           }),
       },
     ),

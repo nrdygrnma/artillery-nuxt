@@ -60,21 +60,6 @@ const emit = defineEmits<{
   ): void;
 }>();
 
-const validateFiles = (selectedFilees: File[]) => {
-  const validFiles: File[] = [];
-  const invalidFiles: string[] = [];
-
-  for (const file of selectedFilees) {
-    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
-    if (allowedExtensions.includes(ext)) {
-      validFiles.push(file);
-    } else {
-      invalidFiles.push(file.name);
-    }
-  }
-  return { validFiles, invalidFiles };
-};
-
 const handleFileChange = (e: Event) => {
   const input = e.target as HTMLInputElement;
   if (input.files) {

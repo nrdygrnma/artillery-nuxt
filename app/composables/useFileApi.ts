@@ -144,5 +144,3 @@ export const useFileApi = () => {
     isUploading,
   };
 };
-
-export type UseFileApiReturn = ReturnType<typeof useFileApi>;
