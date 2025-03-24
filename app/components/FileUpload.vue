@@ -5,31 +5,50 @@
     </template>
 
     <UFormField class="mb-6" label="Select File">
-      <UInput ref="fileInput" type="file" @change="handleFileChange" />
+      <UInput
+        v-model="fileInputValue"
+        aria-describedby="fileHelp"
+        type="file"
+        @change="handleFileChange"
+      />
+      <p id="fileHelp" class="text-xs text-gray-500 mt-1">
+        Only .yaml or .yml files are allowed.
+      </p>
     </UFormField>
 
     <UButton
-      :loading="isLoading"
+      :disabled="!file"
+      :loading="isUploading"
       icon="eva:upload-outline"
-      @click="startUpload"
+      @click="handleUpload"
     >
       Upload
     </UButton>
 
-    <div v-if="isLoading">Uploading...</div>
+    <div
+      v-if="isUploading"
+      class="mt-4 text-sm text-slate-600 font-light italic"
+    >
+      Uploading file...
+    </div>
+
+    <UProgress
+      v-if="isUploading && uploadProgress > 0"
+      :value="uploadProgress"
+      class="mt-2"
+    />
   </UCard>
 </template>
 
 <script lang="ts" setup>
-import { useFileApi } from "~/composables/useFileApi";
+const { uploadFileWithProgress, uploadProgress, isUploading } = useFileApi();
 import { useAppToast } from "~/composables/useAppToast";
 
-const { uploadFile } = useFileApi();
 const { showToast } = useAppToast();
 
-const isLoading = ref(false);
+const allowedTypes = ["application/x-yaml", "text/yaml", "application/yaml"];
 const file = ref<File | null>(null);
-const fileInput = ref<HTMLInputElement | null>(null);
+const fileInputValue = ref("");
 
 const emit = defineEmits<{
   (e: "fileUploaded", newFile: string, uploadedDate: string): void;
@@ -40,20 +59,29 @@ const handleFileChange = (e: Event) => {
   file.value = input.files?.[0] || null;
 };
 
-const startUpload = async () => {
+const handleUpload = async () => {
   if (!file.value) {
     showToast("Error", "Please select a file first!", "warning");
     return;
   }
 
-  isLoading.value = true;
-  const result = await uploadFile(file.value);
-  isLoading.value = false;
+  if (!allowedTypes.includes(file.value.type)) {
+    showToast("Error", "Only YAML files are allowed!", "warning");
+    resetFileInput();
+    return;
+  }
+
+  const result = await uploadFileWithProgress(file.value);
 
   if (result) {
-    emit("fileUploaded", result.filename, result.uploadedDate);
-    file.value = null;
-    fileInput.value!.value = "";
+    const { filename, uploadedDate } = result;
+    emit("fileUploaded", filename, uploadedDate);
+    resetFileInput();
   }
+};
+
+const resetFileInput = () => {
+  file.value = null;
+  fileInputValue.value = "";
 };
 </script>

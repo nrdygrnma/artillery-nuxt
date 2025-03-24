@@ -8,6 +8,8 @@ import { useAppToast } from "./useAppToast";
 export const useFileApi = () => {
   const uploadedFiles = ref<FileItem[]>([]);
   const status = ref<"pending" | "idle" | "error">("idle");
+  const uploadProgress = ref(0);
+  const isUploading = ref(false);
   const { showToast } = useAppToast();
 
   const fetchFiles = async () => {
@@ -30,29 +32,55 @@ export const useFileApi = () => {
     }
   };
 
-  const uploadFile = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
+  const uploadFileWithProgress = (
+    file: File,
+  ): Promise<{ filename: string; uploadedDate: string } | null> => {
+    return new Promise((resolve) => {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const { data, error } = await useFetch<FileOperationResponse>(
-      "/api/upload",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/upload");
+      isUploading.value = true;
+      uploadProgress.value = 0;
 
-    if (error.value || !data.value?.success) {
-      showToast("Error", data.value?.message || "Upload failed", "error");
-      return null;
-    }
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          uploadProgress.value = Math.round((event.loaded / event.total) * 100);
+        }
+      };
 
-    showToast("Success", "File uploaded successfully!", "success");
-    await fetchFiles();
-    return {
-      filename: data.value.filename!,
-      uploadedDate: data.value.uploadedDate!,
-    };
+      xhr.onload = async () => {
+        isUploading.value = false;
+        uploadProgress.value = 100;
+
+        if (xhr.status === 200) {
+          const response: FileOperationResponse = JSON.parse(xhr.responseText);
+          if (response.success) {
+            showToast("Success", "File uploaded!", "success");
+            await fetchFiles(); // Optionally refresh list
+            resolve({
+              filename: response.filename!,
+              uploadedDate: response.uploadedDate!,
+            });
+          } else {
+            showToast("Error", response.message || "Upload failed", "error");
+            resolve(null);
+          }
+        } else {
+          showToast("Error", "Server error", "error");
+          resolve(null);
+        }
+      };
+
+      xhr.onerror = () => {
+        isUploading.value = false;
+        showToast("Error", "Network error", "error");
+        resolve(null);
+      };
+
+      xhr.send(formData);
+    });
   };
 
   const deleteFile = async (filename: string) => {
@@ -70,7 +98,15 @@ export const useFileApi = () => {
     }
   };
 
-  return { uploadedFiles, fetchFiles, uploadFile, deleteFile, status };
+  return {
+    uploadedFiles,
+    fetchFiles,
+    uploadFileWithProgress,
+    deleteFile,
+    status,
+    uploadProgress,
+    isUploading,
+  };
 };
 
 export type UseFileApiReturn = ReturnType<typeof useFileApi>;
