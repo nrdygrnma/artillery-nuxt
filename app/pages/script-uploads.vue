@@ -13,7 +13,7 @@
       </div>
 
       <div class="w-1/3">
-        <FileUpload @fileUploaded="onFileUploaded" />
+        <FileUpload @filesUploaded="onFilesUploaded" />
       </div>
     </div>
   </div>
@@ -125,7 +125,7 @@ const { data, status, refresh } = await useFetch("/api/files", {
   lazy: true,
 });
 
-const onFileUploaded = async (newFile: string, uploadedDate: string) => {
+const onFilesUploaded = async (newFile: string, uploadedDate: string) => {
   const newFileItem: FileItem = {
     id: (uploadedFiles.value.length + 1).toString(),
     name: newFile,

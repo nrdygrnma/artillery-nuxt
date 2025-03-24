@@ -54,7 +54,7 @@ const fileInputValue = ref("");
 
 const emit = defineEmits<{
   (
-    e: "fileUploaded",
+    e: "filesUploaded",
     newFiles: { filename: string; uploadedDate: string }[],
   ): void;
 }>();
@@ -106,7 +106,7 @@ const handleUpload = async () => {
   const uploadedFiles = await uploadFilesWithProgress(validFiles);
 
   if (uploadedFiles.length > 0) {
-    emit("fileUploaded", uploadedFiles);
+    emit("filesUploaded", uploadedFiles);
     resetFileInput();
   }
 };
