@@ -13,7 +13,7 @@
       </div>
 
       <div class="w-1/3">
-        <FileUploader @fileUploaded="onFileUploaded" />
+        <FileUpload @fileUploaded="onFileUploaded" />
       </div>
     </div>
   </div>
@@ -21,7 +21,7 @@
 
 <script lang="ts" setup>
 import { h, ref, resolveComponent } from "vue";
-import FileUploader from "~/components/FileUploader.vue";
+import FileUpload from "~/components/FileUpload.vue";
 import type { TableColumn } from "@nuxt/ui";
 import type {
   FileItem,

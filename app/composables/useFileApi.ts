@@ -30,6 +30,31 @@ export const useFileApi = () => {
     }
   };
 
+  const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const { data, error } = await useFetch<FileOperationResponse>(
+      "/api/upload",
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (error.value || !data.value?.success) {
+      showToast("Error", data.value?.message || "Upload failed", "error");
+      return null;
+    }
+
+    showToast("Success", "File uploaded successfully!", "success");
+    await fetchFiles();
+    return {
+      filename: data.value.filename!,
+      uploadedDate: data.value.uploadedDate!,
+    };
+  };
+
   const deleteFile = async (filename: string) => {
     const { data } = await useFetch<FileOperationResponse>(
       `/api/files/${encodeURIComponent(filename)}`,
@@ -45,7 +70,7 @@ export const useFileApi = () => {
     }
   };
 
-  return { uploadedFiles, fetchFiles, deleteFile, status };
+  return { uploadedFiles, fetchFiles, uploadFile, deleteFile, status };
 };
 
 export type UseFileApiReturn = ReturnType<typeof useFileApi>;
