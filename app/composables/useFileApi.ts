@@ -32,54 +32,86 @@ export const useFileApi = () => {
     }
   };
 
-  const uploadFileWithProgress = (
-    file: File,
-  ): Promise<{ filename: string; uploadedDate: string } | null> => {
-    return new Promise((resolve) => {
-      const formData = new FormData();
-      formData.append("file", file);
+  const uploadFilesWithProgress = (
+    files: File[],
+  ): Promise<{ filename: string; uploadedDate: string }[]> => {
+    return new Promise(async (resolve) => {
+      if (files.length === 0) return resolve([]);
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/upload");
+      const uploadedResults: { filename: string; uploadedDate: string }[] = [];
+      let filesProcessed = 0;
       isUploading.value = true;
       uploadProgress.value = 0;
 
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          uploadProgress.value = Math.round((event.loaded / event.total) * 100);
+      const uploadSingleFile = (file: File): Promise<void> => {
+        return new Promise((fileResolve) => {
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "/api/upload");
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const fileProgress = Math.round(
+                (event.loaded / event.total) * 100,
+              );
+              uploadProgress.value = Math.round(
+                ((filesProcessed + fileProgress / 100) / files.length) * 100,
+              );
+            }
+          };
+
+          xhr.onload = () => {
+            filesProcessed++;
+            if (xhr.status === 200) {
+              const response: FileOperationResponse = JSON.parse(
+                xhr.responseText,
+              );
+              if (response.success) {
+                uploadedResults.push({
+                  filename: response.filename!,
+                  uploadedDate: response.uploadedDate!,
+                });
+                showToast(
+                  "Success",
+                  `${response.filename} uploaded!`,
+                  "success",
+                );
+              } else {
+                showToast(
+                  "Error",
+                  response.message || "Upload failed",
+                  "error",
+                );
+              }
+            } else {
+              showToast("Error", "Server error during upload", "error");
+            }
+            fileResolve();
+          };
+
+          xhr.onerror = () => {
+            filesProcessed++;
+            showToast("Error", "Network error during upload", "error");
+            fileResolve();
+          };
+
+          xhr.send(formData);
+        });
+      };
+
+      const uploadSequentially = async () => {
+        for (const file of files) {
+          await uploadSingleFile(file);
         }
       };
 
-      xhr.onload = async () => {
-        isUploading.value = false;
-        uploadProgress.value = 100;
-
-        if (xhr.status === 200) {
-          const response: FileOperationResponse = JSON.parse(xhr.responseText);
-          if (response.success) {
-            showToast("Success", "File uploaded!", "success");
-            await fetchFiles(); // Optionally refresh list
-            resolve({
-              filename: response.filename!,
-              uploadedDate: response.uploadedDate!,
-            });
-          } else {
-            showToast("Error", response.message || "Upload failed", "error");
-            resolve(null);
-          }
-        } else {
-          showToast("Error", "Server error", "error");
-          resolve(null);
-        }
-      };
-
-      xhr.onerror = () => {
-        isUploading.value = false;
-        showToast("Error", "Network error", "error");
-        resolve(null);
-      };
-
-      xhr.send(formData);
+      await uploadSequentially();
+      isUploading.value = false;
+      uploadProgress.value = 100;
+      await fetchFiles();
+      resolve(uploadedResults);
     });
   };
 
@@ -101,7 +133,7 @@ export const useFileApi = () => {
   return {
     uploadedFiles,
     fetchFiles,
-    uploadFileWithProgress,
+    uploadFilesWithProgress,
     deleteFile,
     status,
     uploadProgress,

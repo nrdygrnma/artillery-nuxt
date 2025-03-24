@@ -1,13 +1,14 @@
 <template>
   <UCard class="w-full max-w-lg">
     <template #header>
-      <h2 class="text-xl font-semibold">Upload a File</h2>
+      <h2 class="text-xl font-semibold">Upload Files</h2>
     </template>
 
-    <UFormField class="mb-6" label="Select File">
+    <UFormField class="mb-6" label="Select File(s)">
       <UInput
         v-model="fileInputValue"
         aria-describedby="fileHelp"
+        multiple
         type="file"
         @change="handleFileChange"
       />
@@ -17,7 +18,7 @@
     </UFormField>
 
     <UButton
-      :disabled="!file"
+      :disabled="files.length === 0"
       :loading="isUploading"
       icon="eva:upload-outline"
       @click="handleUpload"
@@ -29,7 +30,7 @@
       v-if="isUploading"
       class="mt-4 text-sm text-slate-600 font-light italic"
     >
-      Uploading file...
+      Uploading file(s)...
     </div>
 
     <UProgress
@@ -41,47 +42,57 @@
 </template>
 
 <script lang="ts" setup>
-const { uploadFileWithProgress, uploadProgress, isUploading } = useFileApi();
+import { useFileApi } from "~/composables/useFileApi";
 import { useAppToast } from "~/composables/useAppToast";
 
+const { uploadFilesWithProgress, uploadProgress, isUploading } = useFileApi();
 const { showToast } = useAppToast();
 
-const allowedTypes = ["application/x-yaml", "text/yaml", "application/yaml"];
-const file = ref<File | null>(null);
+const allowedExtensions = [".yaml", ".yml"];
+const files = ref<File[]>([]);
 const fileInputValue = ref("");
 
 const emit = defineEmits<{
-  (e: "fileUploaded", newFile: string, uploadedDate: string): void;
+  (
+    e: "fileUploaded",
+    newFiles: { filename: string; uploadedDate: string }[],
+  ): void;
 }>();
 
 const handleFileChange = (e: Event) => {
   const input = e.target as HTMLInputElement;
-  file.value = input.files?.[0] || null;
+  if (input.files) {
+    files.value = Array.from(input.files);
+  }
 };
 
 const handleUpload = async () => {
-  if (!file.value) {
-    showToast("Error", "Please select a file first!", "warning");
+  if (files.value.length === 0) {
+    showToast("Error", "Please select files first!", "warning");
     return;
   }
 
-  if (!allowedTypes.includes(file.value.type)) {
-    showToast("Error", "Only YAML files are allowed!", "warning");
+  const invalidFile = files.value.find((file) => {
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    return !allowedExtensions.includes(ext);
+  });
+
+  if (invalidFile) {
+    showToast("Error", "Only YAML (.yaml, .yml) files are allowed!", "warning");
     resetFileInput();
     return;
   }
 
-  const result = await uploadFileWithProgress(file.value);
+  const uploadedFiles = await uploadFilesWithProgress(files.value);
 
-  if (result) {
-    const { filename, uploadedDate } = result;
-    emit("fileUploaded", filename, uploadedDate);
+  if (uploadedFiles.length > 0) {
+    emit("fileUploaded", uploadedFiles);
     resetFileInput();
   }
 };
 
 const resetFileInput = () => {
-  file.value = null;
+  files.value = [];
   fileInputValue.value = "";
 };
 </script>
