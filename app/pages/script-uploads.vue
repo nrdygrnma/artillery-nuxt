@@ -54,12 +54,11 @@ const { showToast } = useAppToast();
 const UButton = resolveComponent("UButton");
 const UTooltip = resolveComponent("UTooltip");
 const UCheckbox = resolveComponent("UCheckbox");
-const UDropdownMenu = resolveComponent("UDropdownMenu");
 
 const overlay = useOverlay();
+const rowSelection = ref({});
 const uploadedFiles = ref<FileItem[]>([]);
 const table = useTemplateRef<any>("table");
-const rowSelection = ref({});
 const selectedRows = computed(
   () => table.value?.tableApi?.getFilteredSelectedRowModel().rows ?? [],
 );
@@ -259,7 +258,7 @@ const getHeader = (column: Column<FileItem>, label: string) => {
         : "i-lucide-arrow-down-wide-narrow"
       : "i-lucide-arrow-up-down",
     class: "-mx-2.5",
-    onClick: () => column.toggleSorting(isSorted === "asc"), // Toggles direction
+    onClick: () => column.toggleSorting(isSorted === "asc"),
   });
 };
 
