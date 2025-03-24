@@ -26,22 +26,27 @@ export default defineEventHandler(async (event: H3Event) => {
     };
   }
 
+  const existingMetadataRaw = await fs.readFile(metadataFilePath, "utf8");
+  const existingMetadata = JSON.parse(existingMetadataRaw);
+
+  const isDuplicate = existingMetadata.some(
+    (entry: { filename: string }) => entry.filename === file.filename,
+  );
+
+  if (isDuplicate) {
+    return {
+      success: false,
+      message: `File with the same name already exists: ${file.filename}`,
+    };
+  }
+
   const filePath = path.join(uploadDir, file.filename);
   await fs.writeFile(filePath, file.data);
 
   const uploadedDate = new Date().toISOString();
   const metadata = { filename: file.filename, uploadedDate };
-
-  let existingMetadata = [];
-  try {
-    const data = await fs.readFile(metadataFilePath, "utf-8");
-    existingMetadata = JSON.parse(data);
-  } catch (error) {
-    console.log(error);
-    return { success: false, message: "Could not create metadata" };
-  }
-
   existingMetadata.push(metadata);
+
   await fs.writeFile(
     metadataFilePath,
     JSON.stringify(existingMetadata, null, 2),
