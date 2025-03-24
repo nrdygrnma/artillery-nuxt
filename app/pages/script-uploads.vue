@@ -125,13 +125,16 @@ const { data, status, refresh } = await useFetch("/api/files", {
   lazy: true,
 });
 
-const onFilesUploaded = async (newFile: string, uploadedDate: string) => {
-  const newFileItem: FileItem = {
-    id: (uploadedFiles.value.length + 1).toString(),
-    name: newFile,
-    uploadedDate: new Date(uploadedDate),
-  };
-  uploadedFiles.value.push(newFileItem);
+const onFilesUploaded = async (
+  newFiles: { filename: string; uploadedDate: string }[],
+) => {
+  newFiles.forEach((file, idx) => {
+    uploadedFiles.value.push({
+      id: (uploadedFiles.value.length + idx + 1).toString(),
+      name: file.filename,
+      uploadedDate: new Date(file.uploadedDate),
+    });
+  });
   await refreshFiles();
 };
 
@@ -165,7 +168,6 @@ const deleteScript = async (filename: string | undefined) => {
       );
 
       if (data.value && data.value.success) {
-        console.log("File deleted successfully:", data.value);
         await refreshFiles();
       } else {
         console.error("Error deleting file:", error);

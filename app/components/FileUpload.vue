@@ -7,6 +7,7 @@
     <UFormField class="mb-6" label="Select File(s)">
       <UInput
         v-model="fileInputValue"
+        accept=".yaml,.yml"
         aria-describedby="fileHelp"
         multiple
         type="file"
@@ -59,11 +60,11 @@ const emit = defineEmits<{
   ): void;
 }>();
 
-const validateFiles = (files: File[]) => {
+const validateFiles = (selectedFilees: File[]) => {
   const validFiles: File[] = [];
   const invalidFiles: string[] = [];
 
-  for (const file of files) {
+  for (const file of selectedFilees) {
     const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
     if (allowedExtensions.includes(ext)) {
       validFiles.push(file);
@@ -109,6 +110,7 @@ const handleUpload = async () => {
     emit("filesUploaded", uploadedFiles);
     resetFileInput();
   }
+  resetFileInput();
 };
 
 const resetFileInput = () => {

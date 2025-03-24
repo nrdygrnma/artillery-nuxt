@@ -103,7 +103,11 @@ export const useFileApi = () => {
 
       const uploadSequentially = async () => {
         for (const file of files) {
-          await uploadSingleFile(file);
+          try {
+            await uploadSingleFile(file);
+          } catch (err) {
+            console.error(`Failed to upload ${file.name}`, err);
+          }
         }
       };
 
