@@ -59,6 +59,21 @@ const emit = defineEmits<{
   ): void;
 }>();
 
+const validateFiles = (files: File[]) => {
+  const validFiles: File[] = [];
+  const invalidFiles: string[] = [];
+
+  for (const file of files) {
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    if (allowedExtensions.includes(ext)) {
+      validFiles.push(file);
+    } else {
+      invalidFiles.push(file.name);
+    }
+  }
+  return { validFiles, invalidFiles };
+};
+
 const handleFileChange = (e: Event) => {
   const input = e.target as HTMLInputElement;
   if (input.files) {
@@ -72,18 +87,23 @@ const handleUpload = async () => {
     return;
   }
 
-  const invalidFile = files.value.find((file) => {
-    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
-    return !allowedExtensions.includes(ext);
-  });
+  const { validFiles, invalidFiles } = validateFiles(files.value);
 
-  if (invalidFile) {
-    showToast("Error", "Only YAML (.yaml, .yml) files are allowed!", "warning");
+  if (validFiles.length === 0) {
+    showToast("Error", "No valid YAML files to upload.", "warning");
     resetFileInput();
     return;
   }
 
-  const uploadedFiles = await uploadFilesWithProgress(files.value);
+  if (invalidFiles.length > 0) {
+    showToast(
+      "Warning",
+      `Skipped non-YAML files: ${invalidFiles.join(", ")}`,
+      "warning",
+    );
+  }
+
+  const uploadedFiles = await uploadFilesWithProgress(validFiles);
 
   if (uploadedFiles.length > 0) {
     emit("fileUploaded", uploadedFiles);
