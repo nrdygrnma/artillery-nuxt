@@ -88,27 +88,10 @@ const handleUpload = async () => {
     return;
   }
 
-  const { validFiles, invalidFiles } = validateFiles(files.value);
-
-  if (validFiles.length === 0) {
-    showToast("Error", "No valid YAML files to upload.", "warning");
-    resetFileInput();
-    return;
-  }
-
-  if (invalidFiles.length > 0) {
-    showToast(
-      "Warning",
-      `Skipped non-YAML files: ${invalidFiles.join(", ")}`,
-      "warning",
-    );
-  }
-
-  const uploadedFiles = await uploadFilesWithProgress(validFiles);
+  const uploadedFiles = await uploadFilesWithProgress(files.value);
 
   if (uploadedFiles.length > 0) {
     emit("filesUploaded", uploadedFiles);
-    resetFileInput();
   }
   resetFileInput();
 };
