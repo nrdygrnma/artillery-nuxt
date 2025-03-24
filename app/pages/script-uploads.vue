@@ -4,7 +4,25 @@
 
     <div class="flex gap-28">
       <div class="flex-1">
+        <div class="mb-4 h-10 flex items-center">
+          <UButton
+            :class="[
+              'transition-opacity duration-300',
+              selectedRowCount > 0
+                ? 'opacity-100 pointer-events-auto'
+                : 'opacity-0 pointer-events-none',
+            ]"
+            class="cursor-pointer"
+            color="error"
+            icon="eva:trash-2-outline"
+            @click="bulkDelete"
+          >
+            Delete Selected ({{ selectedRowCount }})
+          </UButton>
+        </div>
         <UTable
+          ref="table"
+          v-model:row-selection="rowSelection"
           :columns="columns"
           :data="uploadedFiles"
           :loading="status === 'pending'"
@@ -22,8 +40,8 @@
 <script lang="ts" setup>
 import { h, ref, resolveComponent } from "vue";
 import { useAppToast } from "~/composables/useAppToast";
-import { DeleteModal, FileUpload } from "#components";
 import type { TableColumn } from "@nuxt/ui";
+import { DeleteModal, FileUpload } from "#components";
 import type {
   FileItem,
   FileListResponse,
@@ -33,11 +51,37 @@ import type {
 const { showToast } = useAppToast();
 const UButton = resolveComponent("UButton");
 const UTooltip = resolveComponent("UTooltip");
+const UCheckbox = resolveComponent("UCheckbox");
 
 const overlay = useOverlay();
 const uploadedFiles = ref<FileItem[]>([]);
+const table = useTemplateRef<any>("table");
+const rowSelection = ref({});
+const selectedRows = computed(
+  () => table.value?.tableApi?.getFilteredSelectedRowModel().rows ?? [],
+);
+const selectedRowCount = computed(() => selectedRows.value.length);
 
 const columns: TableColumn<FileItem>[] = [
+  {
+    id: "select",
+    header: ({ table }) =>
+      h(UCheckbox, {
+        modelValue: table.getIsSomePageRowsSelected()
+          ? "indeterminate"
+          : table.getIsAllPageRowsSelected(),
+        "onUpdate:modelValue": (value: boolean | "indeterminate") =>
+          table.toggleAllPageRowsSelected(!!value),
+        ariaLabel: "Select all",
+      }),
+    cell: ({ row }) =>
+      h(UCheckbox, {
+        modelValue: row.getIsSelected(),
+        "onUpdate:modelValue": (value: boolean | "indeterminate") =>
+          row.toggleSelected(!!value),
+        ariaLabel: "Select row",
+      }),
+  },
   {
     accessorKey: "id",
     header: "#",
@@ -96,7 +140,11 @@ const editScript = (fileItem: FileItem) => {
 };
 
 const confirmDeleteModal = async (filename: string) => {
-  const modal = overlay.create(DeleteModal, { props: { filename } });
+  const modal = overlay.create(DeleteModal, {
+    props: {
+      message: `Are you sure you want to delete the script: "${filename}"?`,
+    },
+  });
   const confirmed = await modal.open();
 
   if (confirmed) {
@@ -114,6 +162,7 @@ const confirmDelete = async (filename: string) => {
 
     if (data.value?.success) {
       await refreshFiles();
+      rowSelection.value = {};
       showToast("Success", "File deleted successfully", "success");
     } else {
       showToast("Error", data.value?.message || "Delete failed", "error");
@@ -121,6 +170,27 @@ const confirmDelete = async (filename: string) => {
   } catch (err) {
     console.error("Unexpected error:", err);
   }
+};
+
+const bulkDelete = async () => {
+  if (selectedRowCount.value === 0) return;
+
+  const filenames = selectedRows.value.map((row: any) => row.original.name);
+
+  const modal = overlay.create(DeleteModal, {
+    props: {
+      message: `Are you sure you want to delete ${filenames.length} selected script(s)?`,
+    },
+  });
+  const confirmed = await modal.open();
+
+  if (!confirmed) return;
+
+  for (const name of filenames) {
+    await confirmDelete(name);
+  }
+  await refreshFiles();
+  rowSelection.value = {};
 };
 
 const renderActions = (row: any) =>

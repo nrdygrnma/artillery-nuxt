@@ -1,11 +1,7 @@
 <template>
   <UModal :title="'Confirm Deletion'">
     <template #body>
-      <p>
-        Are you sure you want to delete
-        <span class="font-medium text-red-600">{{ filename }}</span
-        >?
-      </p>
+      <p>{{ message }}</p>
     </template>
 
     <template #footer>
@@ -29,6 +25,6 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{ filename: string }>();
+defineProps<{ message: string }>();
 const emit = defineEmits<{ (e: "close", confirm: boolean): void }>();
 </script>
