@@ -1,10 +1,10 @@
 <template>
   <div class="container mx-auto py-10">
-    <h1 class="text-2xl font-semibold mb-6">Script Uploads</h1>
+    <h1 class="text-2xl font-semibold mb-2">Script Uploads</h1>
 
     <div class="flex gap-28">
       <div class="flex-1">
-        <div class="mb-4 h-10 flex items-center">
+        <div class="mb-2 h-10 flex items-center">
           <UButton
             :class="[
               'transition-opacity duration-300',
@@ -23,6 +23,7 @@
         <UTable
           ref="table"
           v-model:row-selection="rowSelection"
+          v-model:sorting="sorting"
           :columns="columns"
           :data="uploadedFiles"
           :loading="status === 'pending'"
@@ -30,7 +31,7 @@
         />
       </div>
 
-      <div class="w-1/3">
+      <div class="w-1/3 mt-12">
         <FileUpload @filesUploaded="onFilesUploaded" />
       </div>
     </div>
@@ -47,11 +48,13 @@ import type {
   FileListResponse,
   FileOperationResponse,
 } from "~~/types";
+import type { Column } from "@tanstack/vue-table";
 
 const { showToast } = useAppToast();
 const UButton = resolveComponent("UButton");
 const UTooltip = resolveComponent("UTooltip");
 const UCheckbox = resolveComponent("UCheckbox");
+const UDropdownMenu = resolveComponent("UDropdownMenu");
 
 const overlay = useOverlay();
 const uploadedFiles = ref<FileItem[]>([]);
@@ -61,6 +64,12 @@ const selectedRows = computed(
   () => table.value?.tableApi?.getFilteredSelectedRowModel().rows ?? [],
 );
 const selectedRowCount = computed(() => selectedRows.value.length);
+const sorting = ref([
+  {
+    id: "uploadedDate",
+    desc: true,
+  },
+]);
 
 const columns: TableColumn<FileItem>[] = [
   {
@@ -89,12 +98,12 @@ const columns: TableColumn<FileItem>[] = [
   },
   {
     accessorKey: "name",
-    header: "Script Name",
+    header: ({ column }) => getHeader(column, "Script Name"),
     cell: ({ row }) => row.getValue("name"),
   },
   {
     accessorKey: "uploadedDate",
-    header: "Uploaded Date",
+    header: ({ column }) => getHeader(column, "Uploaded Date"),
     cell: ({ row }) => {
       const dateValue = row.getValue("uploadedDate");
       return dateValue instanceof Date
@@ -236,6 +245,23 @@ const renderActions = (row: any) =>
       },
     ),
   ]);
+
+const getHeader = (column: Column<FileItem>, label: string) => {
+  const isSorted = column.getIsSorted();
+
+  return h(UButton, {
+    color: "neutral",
+    variant: "ghost",
+    label,
+    icon: isSorted
+      ? isSorted === "asc"
+        ? "i-lucide-arrow-up-narrow-wide"
+        : "i-lucide-arrow-down-wide-narrow"
+      : "i-lucide-arrow-up-down",
+    class: "-mx-2.5",
+    onClick: () => column.toggleSorting(isSorted === "asc"), // Toggles direction
+  });
+};
 
 onMounted(async () => {
   await refreshFiles();
