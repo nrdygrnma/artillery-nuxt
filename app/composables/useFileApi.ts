@@ -8,6 +8,7 @@ import { useAppToast } from "./useAppToast";
 export const useFileApi = () => {
   const uploadedFiles = ref<FileItem[]>([]);
   const status = ref<"pending" | "idle" | "error">("idle");
+  const globalRefresh = ref();
   const uploadProgress = ref(0);
   const isUploading = ref(false);
   const { showToast } = useAppToast();
@@ -15,16 +16,27 @@ export const useFileApi = () => {
   const fetchFiles = async () => {
     status.value = "pending";
     try {
-      const { data } = await useFetch("/api/files", {
-        transform: (data: FileListResponse) =>
-          data.files.map((file, index) => ({
-            id: (index + 1).toString(),
-            name: file.filename,
-            uploadedDate: new Date(file.uploadedDate),
-          })),
+      const {
+        data: filesData,
+        status,
+        refresh,
+      } = await useFetch("/api/files", {
+        key: "script-files",
+        transform: (data: FileListResponse) => {
+          return (
+            data?.files?.map((file, index) => ({
+              id: (index + 1).toString(),
+              name: file.filename,
+              uploadedDate: new Date(file.uploadedDate),
+            })) || []
+          );
+        },
+        lazy: true,
       });
-      uploadedFiles.value = data.value ?? [];
+
+      uploadedFiles.value = filesData.value ?? [];
       status.value = "idle";
+      globalRefresh.value = refresh();
     } catch (err) {
       console.error("Failed fetching files:", err);
       status.value = "error";
@@ -140,6 +152,7 @@ export const useFileApi = () => {
     uploadFilesWithProgress,
     deleteFile,
     status,
+    globalRefresh,
     uploadProgress,
     isUploading,
   };
