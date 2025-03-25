@@ -39,18 +39,19 @@
 </template>
 
 <script lang="ts" setup>
-import { h, ref, resolveComponent } from "vue";
+import { ref, resolveComponent } from "vue";
 import { useAppToast } from "~/composables/useAppToast";
-import type { TableColumn } from "@nuxt/ui";
+import { useTableUtils } from "~/composables/useTableUtils";
 import { DeleteModal, FileUpload } from "#components";
 import type {
   FileItem,
   FileListResponse,
   FileOperationResponse,
 } from "~~/types";
-import type { Column } from "@tanstack/vue-table";
 
 const { showToast } = useAppToast();
+const { useFileColumns } = useTableUtils();
+
 const UButton = resolveComponent("UButton");
 const UTooltip = resolveComponent("UTooltip");
 const UCheckbox = resolveComponent("UCheckbox");
@@ -69,52 +70,6 @@ const sorting = ref([
     desc: true,
   },
 ]);
-
-const columns: TableColumn<FileItem>[] = [
-  {
-    id: "select",
-    header: ({ table }) =>
-      h(UCheckbox, {
-        modelValue: table.getIsSomePageRowsSelected()
-          ? "indeterminate"
-          : table.getIsAllPageRowsSelected(),
-        "onUpdate:modelValue": (value: boolean | "indeterminate") =>
-          table.toggleAllPageRowsSelected(!!value),
-        ariaLabel: "Select all",
-      }),
-    cell: ({ row }) =>
-      h(UCheckbox, {
-        modelValue: row.getIsSelected(),
-        "onUpdate:modelValue": (value: boolean | "indeterminate") =>
-          row.toggleSelected(!!value),
-        ariaLabel: "Select row",
-      }),
-  },
-  {
-    accessorKey: "id",
-    header: "#",
-    cell: ({ row }) => row.getValue("id"),
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => getHeader(column, "Script Name"),
-    cell: ({ row }) => row.getValue("name"),
-  },
-  {
-    accessorKey: "uploadedDate",
-    header: ({ column }) => getHeader(column, "Uploaded Date"),
-    cell: ({ row }) => {
-      const dateValue = row.getValue("uploadedDate");
-      return dateValue instanceof Date
-        ? dateValue.toLocaleString()
-        : "Invalid Date";
-    },
-  },
-  {
-    header: "Actions",
-    cell: ({ row }) => renderActions(row),
-  },
-];
 
 const {
   data: filesData,
@@ -160,6 +115,14 @@ const confirmDeleteModal = async (filename: string) => {
   }
 };
 
+const columns = useFileColumns({
+  UCheckbox,
+  UTooltip,
+  UButton,
+  editScript,
+  confirmDeleteModal,
+});
+
 const confirmDelete = async (filename: string) => {
   try {
     const encodedFilename = encodeURIComponent(filename);
@@ -199,67 +162,6 @@ const bulkDelete = async () => {
   }
   await refreshFiles();
   rowSelection.value = {};
-};
-
-const renderActions = (row: any) =>
-  h("div", { class: "flex space-x-2" }, [
-    h(
-      UTooltip,
-      {
-        arrow: true,
-        text: "Edit Script",
-        content: { side: "top", sideOffset: 5 },
-      },
-      {
-        default: () =>
-          h(UButton, {
-            variant: "outline",
-            color: "neutral",
-            icon: "eva:edit-2-outline",
-            size: "md",
-            class: "cursor-pointer",
-            onClick: () => editScript(row.original),
-          }),
-      },
-    ),
-    h(
-      UTooltip,
-      {
-        arrow: true,
-        text: "Delete Script",
-        content: { side: "top", sideOffset: 5 },
-      },
-
-      {
-        default: () =>
-          h(UButton, {
-            variant: "outline",
-            color: "error",
-            icon: "eva:trash-2-outline",
-            size: "md",
-            class: "cursor-pointer",
-            onClick: () =>
-              row.original.name && confirmDeleteModal(row.original.name),
-          }),
-      },
-    ),
-  ]);
-
-const getHeader = (column: Column<FileItem>, label: string) => {
-  const isSorted = column.getIsSorted();
-
-  return h(UButton, {
-    color: "neutral",
-    variant: "ghost",
-    label,
-    icon: isSorted
-      ? isSorted === "asc"
-        ? "i-lucide-arrow-up-narrow-wide"
-        : "i-lucide-arrow-down-wide-narrow"
-      : "i-lucide-arrow-up-down",
-    class: "-mx-2.5",
-    onClick: () => column.toggleSorting(isSorted === "asc"),
-  });
 };
 
 onMounted(async () => {
