@@ -14,3 +14,6 @@ h1 {
   font-size: 48px;
   color: var(--color-primary-500);
 }
+button {
+  cursor: pointer;
+}

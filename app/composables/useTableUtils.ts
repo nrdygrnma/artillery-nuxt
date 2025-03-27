@@ -66,7 +66,7 @@ export const useTableUtils = () => {
             "error",
             UTooltip,
             UButton,
-            () => confirmDeleteModal(row.original.name),
+            () => confirmDeleteModal(row.original),
           ),
         ]),
     },

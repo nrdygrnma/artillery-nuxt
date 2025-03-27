@@ -4,30 +4,16 @@
 
     <div class="flex gap-28">
       <div class="flex-1">
-        <div class="mb-2 h-10 flex items-center">
-          <UButton
-            :class="[
-              'transition-opacity duration-300',
-              selectedRowCount > 0
-                ? 'opacity-100 pointer-events-auto'
-                : 'opacity-0 pointer-events-none',
-            ]"
-            class="cursor-pointer"
-            color="error"
-            icon="eva:trash-2-outline"
-            @click="bulkDelete"
-          >
-            Delete Selected ({{ selectedRowCount }})
-          </UButton>
-        </div>
-        <UTable
-          ref="table"
-          v-model:row-selection="rowSelection"
+        <ScriptTable
           v-model:sorting="sorting"
           :columns="columns"
-          :data="uploadedFiles"
-          :loading="status === 'pending'"
-          class="flex-1"
+          :filter-name="nameFilter"
+          :row-selection="rowSelection"
+          :status="normalizedStatus"
+          :uploaded-files="uploadedFiles"
+          @bulkDelete="bulkDelete"
+          @delete="confirmDeleteModal"
+          @edit="editScript"
         />
       </div>
 
@@ -57,6 +43,7 @@ const UTooltip = resolveComponent("UTooltip");
 const UCheckbox = resolveComponent("UCheckbox");
 
 const overlay = useOverlay();
+const nameFilter = ref("");
 const rowSelection = ref({});
 const uploadedFiles = ref<FileItem[]>([]);
 const table = useTemplateRef<any>("table");
@@ -89,6 +76,10 @@ const {
   lazy: true,
 });
 
+const normalizedStatus = computed(() => {
+  return status.value === "success" ? "idle" : status.value;
+});
+
 const onFilesUploaded = async () => {
   await refreshFiles();
 };
@@ -101,27 +92,6 @@ const refreshFiles = async () => {
 const editScript = (fileItem: FileItem) => {
   console.log("Editing script:", fileItem);
 };
-
-const confirmDeleteModal = async (filename: string) => {
-  const modal = overlay.create(DeleteModal, {
-    props: {
-      message: `Are you sure you want to delete the script: "${filename}"?`,
-    },
-  });
-  const confirmed = await modal.open();
-
-  if (confirmed) {
-    await confirmDelete(filename);
-  }
-};
-
-const columns = useFileColumns({
-  UCheckbox,
-  UTooltip,
-  UButton,
-  editScript,
-  confirmDeleteModal,
-});
 
 const confirmDelete = async (filename: string) => {
   try {
@@ -143,10 +113,21 @@ const confirmDelete = async (filename: string) => {
   }
 };
 
-const bulkDelete = async () => {
-  if (selectedRowCount.value === 0) return;
+const confirmDeleteModal = async (fileItem: FileItem) => {
+  const modal = overlay.create(DeleteModal, {
+    props: {
+      message: `Are you sure you want to delete the script: "${fileItem.name}"?`,
+    },
+  });
+  const confirmed = await modal.open();
 
-  const filenames = selectedRows.value.map((row: any) => row.original.name);
+  if (confirmed) {
+    await confirmDelete(fileItem.name);
+  }
+};
+
+const bulkDelete = async (filenames: string[]) => {
+  if (filenames.length === 0) return;
 
   const modal = overlay.create(DeleteModal, {
     props: {
@@ -163,6 +144,14 @@ const bulkDelete = async () => {
   await refreshFiles();
   rowSelection.value = {};
 };
+
+const columns = useFileColumns({
+  UCheckbox,
+  UTooltip,
+  UButton,
+  editScript,
+  confirmDeleteModal,
+});
 
 onMounted(async () => {
   await refreshFiles();
