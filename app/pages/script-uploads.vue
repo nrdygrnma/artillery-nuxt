@@ -20,7 +20,7 @@
       </div>
 
       <div class="w-1/3 mt-12">
-        <FileUpload @filesUploaded="onFilesUploaded" />
+        <FileDropUpload @filesUploaded="onFilesUploaded" />
       </div>
     </div>
   </div>
@@ -30,7 +30,7 @@
 import { ref, resolveComponent } from "vue";
 import { useAppToast } from "~/composables/useAppToast";
 import { useTableUtils } from "~/composables/useTableUtils";
-import { DeleteModal, FileUpload } from "#components";
+import { DeleteModal } from "#components";
 import type {
   FileItem,
   FileListResponse,
