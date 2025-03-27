@@ -21,6 +21,7 @@
 
     <div v-if="files.length > 0" class="flex flex-wrap gap-2 mt-4 mb-4">
       <h3 class="text-sm text-gray-500 w-full">Selected files:</h3>
+
       <FileTag
         v-for="(file, index) in files"
         :key="index"
