@@ -27,6 +27,15 @@
       Upload
     </UButton>
 
+    <div v-if="files.length > 0" class="mt-4">
+      <p class="text-sm font-medium text-gray-700 mb-1">Selected Files:</p>
+      <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+        <li v-for="file in files" :key="file.name">
+          {{ file.name }}
+        </li>
+      </ul>
+    </div>
+
     <div
       v-if="isUploading"
       class="mt-4 text-sm text-slate-600 font-light italic"
@@ -46,10 +55,9 @@
 import { useFileApi } from "~/composables/useFileApi";
 import { useAppToast } from "~/composables/useAppToast";
 
-const { uploadFilesWithProgress, uploadProgress, isUploading } = useFileApi();
 const { showToast } = useAppToast();
+const { uploadFilesWithProgress, uploadProgress, isUploading } = useFileApi();
 
-const allowedExtensions = [".yaml", ".yml"];
 const files = ref<File[]>([]);
 const fileInputValue = ref("");
 
