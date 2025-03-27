@@ -23,7 +23,7 @@
 
     <UTable
       ref="table"
-      v-model:row-selection="rowSelection"
+      v-model:row-selection="localRowSelection"
       v-model:sorting="sorting"
       :columns="columns"
       :data="uploadedFiles"
@@ -55,6 +55,7 @@ const emit = defineEmits<{
   (e: "edit", file: FileItem): void;
   (e: "delete", file: FileItem): void;
   (e: "bulkDelete", filenames: string[]): void;
+  (e: "update:rowSelection", value: Record<string, boolean>): void;
 }>();
 
 const { useFileColumns } = useTableUtils();
@@ -64,7 +65,6 @@ const UCheckbox = resolveComponent("UCheckbox");
 
 const nameFilter = ref("");
 const table = useTemplateRef<any>("table");
-const rowSelection = ref({});
 const sorting = ref([{ id: "uploadedDate", desc: true }]);
 
 const selectedRows = computed(
@@ -74,6 +74,11 @@ const selectedRowCount = computed(() => selectedRows.value.length);
 const selectedFilenames = computed(() =>
   selectedRows.value.map((row: any) => row.original.name),
 );
+
+const localRowSelection = computed({
+  get: () => props.rowSelection,
+  set: (val) => emit("update:rowSelection", val),
+});
 
 const columns = useFileColumns({
   UCheckbox,

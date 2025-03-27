@@ -5,6 +5,7 @@
     <div class="flex gap-28">
       <div class="flex-1">
         <ScriptTable
+          ref="table"
           v-model:sorting="sorting"
           :columns="columns"
           :filter-name="nameFilter"
@@ -14,6 +15,7 @@
           @bulkDelete="bulkDelete"
           @delete="confirmDeleteModal"
           @edit="editScript"
+          @update:rowSelection="rowSelection = $event"
         />
       </div>
 
@@ -42,6 +44,7 @@ const UButton = resolveComponent("UButton");
 const UTooltip = resolveComponent("UTooltip");
 const UCheckbox = resolveComponent("UCheckbox");
 
+const table = ref();
 const overlay = useOverlay();
 const nameFilter = ref("");
 const rowSelection = ref({});
@@ -62,8 +65,8 @@ const {
   key: "script-files",
   transform: (data: FileListResponse) => {
     return (
-      data?.files?.map((file, index) => ({
-        id: (index + 1).toString(),
+      data.files.map((file) => ({
+        id: file.filename,
         name: file.filename,
         uploadedDate: new Date(file.uploadedDate),
       })) || []
@@ -78,6 +81,7 @@ const normalizedStatus = computed(() => {
 
 const onFilesUploaded = async () => {
   await refreshFiles();
+  resetSelection();
 };
 
 const refreshFiles = async () => {
@@ -138,6 +142,10 @@ const bulkDelete = async (filenames: string[]) => {
     await confirmDelete(name);
   }
   await refreshFiles();
+  resetSelection();
+};
+
+const resetSelection = () => {
   rowSelection.value = {};
 };
 
