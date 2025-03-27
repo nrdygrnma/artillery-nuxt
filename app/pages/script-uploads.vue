@@ -24,13 +24,23 @@
       </div>
 
       <div v-else class="fixed bottom-4 right-4 z-50">
-        <UButton
-          class="rounded-full shadow-lg"
-          color="primary"
-          icon="i-lucide-upload"
-          size="lg"
-          @click="isUploadOpen = true"
-        />
+        <UTooltip
+          :content="{
+            align: 'center',
+            side: 'left',
+            sideOffset: 8,
+          }"
+          arrow
+          text="Upload scripts"
+        >
+          <UButton
+            class="rounded-full shadow-lg"
+            color="primary"
+            icon="i-lucide-upload"
+            size="lg"
+            @click="isUploadOpen = true"
+          />
+        </UTooltip>
       </div>
     </div>
 
