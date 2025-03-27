@@ -1,8 +1,8 @@
 <template>
-  <div class="container mx-auto py-10">
+  <div class="container mx-auto lg:py-10">
     <h1 class="text-2xl font-semibold mb-2">Script Uploads</h1>
 
-    <div class="flex gap-28">
+    <div class="flex gap-28 flex-col lg:flex-row">
       <div class="flex-1">
         <ScriptTable
           ref="table"
@@ -19,15 +19,34 @@
         />
       </div>
 
-      <div class="w-1/3 mt-12">
+      <div v-if="!isMobileView" class="w-full lg:w-1/3 mt-12">
         <FileDropUpload @filesUploaded="onFilesUploaded" />
       </div>
+
+      <div v-else class="fixed bottom-4 right-4 z-50">
+        <UButton
+          class="rounded-full shadow-lg"
+          color="primary"
+          icon="i-lucide-upload"
+          size="lg"
+          @click="isUploadOpen = true"
+        />
+      </div>
     </div>
+
+    <USlideover v-model:open="isUploadOpen">
+      <template #content>
+        <div class="mx-4 my-6">
+          <FileDropUpload @filesUploaded="handleUploadedInMobile" />
+        </div>
+      </template>
+    </USlideover>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, resolveComponent } from "vue";
+import { useMediaQuery } from "@vueuse/core";
 import { useAppToast } from "~/composables/useAppToast";
 import { useTableUtils } from "~/composables/useTableUtils";
 import { DeleteModal } from "#components";
@@ -48,7 +67,9 @@ const table = ref();
 const overlay = useOverlay();
 const nameFilter = ref("");
 const rowSelection = ref({});
+const isUploadOpen = ref(false);
 const uploadedFiles = ref<FileItem[]>([]);
+const isMobileView = useMediaQuery("(max-width: 1200px)");
 
 const sorting = ref([
   {
@@ -147,6 +168,12 @@ const bulkDelete = async (filenames: string[]) => {
 
 const resetSelection = () => {
   rowSelection.value = {};
+};
+
+const handleUploadedInMobile = async () => {
+  await refreshFiles();
+  resetSelection();
+  isUploadOpen.value = false;
 };
 
 const columns = useFileColumns({

@@ -5,7 +5,7 @@
     </template>
 
     <template #footer>
-      <div class="flex justify-end gap-4">
+      <div class="flex justify-end gap-4 w-full">
         <UButton
           color="neutral"
           label="Cancel"

@@ -101,13 +101,11 @@ const handleDrop = (e: DragEvent) => {
 
   const droppedFiles = Array.from(e.dataTransfer.files);
 
-  // Merge and deduplicate by file name
   const allFiles = [...files.value, ...droppedFiles];
   files.value = Array.from(
     new Map(allFiles.map((file) => [file.name, file])).values(),
   );
 
-  // ✅ Sync the input field's internal files
   if (fileInput.value?.inputRef) {
     const dataTransfer = new DataTransfer();
     files.value.forEach((file) => dataTransfer.items.add(file));
