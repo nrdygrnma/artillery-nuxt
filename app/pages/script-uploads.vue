@@ -2,7 +2,7 @@
   <div class="container mx-auto lg:py-10">
     <h1 class="text-2xl font-semibold mb-2">Script Uploads</h1>
 
-    <div class="flex gap-28 flex-col lg:flex-row">
+    <div class="flex gap-20 flex-col lg:flex-row">
       <div class="flex-1">
         <ScriptTable
           ref="table"
@@ -79,7 +79,7 @@ const nameFilter = ref("");
 const rowSelection = ref({});
 const isUploadOpen = ref(false);
 const uploadedFiles = ref<FileItem[]>([]);
-const isMobileView = useMediaQuery("(max-width: 1200px)");
+const isMobileView = useMediaQuery("(max-width: 1024px)");
 
 const sorting = ref([
   {
