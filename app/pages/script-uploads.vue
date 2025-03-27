@@ -59,7 +59,7 @@ import { ref, resolveComponent } from "vue";
 import { useMediaQuery } from "@vueuse/core";
 import { useAppToast } from "~/composables/useAppToast";
 import { useTableUtils } from "~/composables/useTableUtils";
-import { DeleteModal } from "#components";
+import { DeleteModal, FileEditorModal } from "#components";
 import type {
   FileItem,
   FileListResponse,
@@ -120,10 +120,6 @@ const refreshFiles = async () => {
   uploadedFiles.value = (filesData.value ?? []) as FileItem[];
 };
 
-const editScript = (fileItem: FileItem) => {
-  console.log("Editing script:", fileItem);
-};
-
 const confirmDelete = async (filename: string) => {
   try {
     const encodedFilename = encodeURIComponent(filename);
@@ -174,6 +170,57 @@ const bulkDelete = async (filenames: string[]) => {
   }
   await refreshFiles();
   resetSelection();
+};
+
+const editScript = async (fileItem: FileItem) => {
+  const filename = encodeURIComponent(fileItem.name);
+
+  const { data, error } = await useFetch<{ content: string }>(
+    `/api/files/${filename}/content`,
+    {
+      method: "GET",
+    },
+  );
+
+  if (error.value || !data.value?.content) {
+    showToast("Error", `Could not load content for ${fileItem.name}`, "error");
+    return;
+  }
+
+  const content = data.value.content;
+
+  if (content) {
+    await openEditorModal(fileItem.name, content);
+  }
+};
+
+const openEditorModal = async (filename: string, content: string) => {
+  const modal = overlay.create(FileEditorModal, {
+    props: { filename, content },
+  });
+
+  const result = await modal.open();
+  if (result?.confirm && result.content) {
+    console.log(result.content);
+    await saveEditedScript(filename, result.content);
+  }
+};
+
+const saveEditedScript = async (filename: string, newContent: string) => {
+  const { error } = await useFetch(
+    `/api/files/${encodeURIComponent(filename)}/content`,
+    {
+      method: "PUT",
+      body: { content: newContent },
+    },
+  );
+
+  if (error.value) {
+    showToast("Error", `Failed to save ${filename}`, "error");
+  } else {
+    showToast("Success", `${filename} updated successfully`, "success");
+    await refreshFiles();
+  }
 };
 
 const resetSelection = () => {
