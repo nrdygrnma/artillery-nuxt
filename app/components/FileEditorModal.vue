@@ -1,13 +1,15 @@
 <template>
-  <UModal :title="`Edit Script: ${filename}`">
+  <UModal :title="`Edit Script: ${filename}`" fullscreen>
     <template #body>
-      <UFormField class="w-full" label="Content">
-        <UTextarea
+      <div class="w-full">
+        <MonacoEditor
           v-model="localContent"
-          :rows="15"
-          class="w-full font-mono text-sm"
-        />
-      </UFormField>
+          :lang="language"
+          :options="editorOptions"
+          class="w-full h-full"
+          >Loading...</MonacoEditor
+        >
+      </div>
     </template>
 
     <template #footer>
@@ -32,6 +34,8 @@
 </template>
 
 <script lang="ts" setup>
+import type * as monaco from "monaco-editor";
+
 const props = defineProps<{
   filename: string;
   content: string;
@@ -42,6 +46,19 @@ const emit = defineEmits<{
 }>();
 
 const localContent = ref(props.content);
-
-const isDirty = computed(() => localContent.value !== props.content);
+const language = "yaml";
+const editorOptions: monaco.editor.IEditorConstructionOptions = {
+  automaticLayout: true,
+  scrollBeyondLastLine: false,
+  minimap: {
+    enabled: false,
+  },
+  dimension: {
+    height: 500,
+    width: 600,
+  },
+};
+const isDirty = computed(
+  () => localContent.value.trim() !== props.content.trim(),
+);
 </script>

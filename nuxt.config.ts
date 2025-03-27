@@ -4,23 +4,31 @@ export default defineNuxtConfig({
     enabled: true,
 
     timeline: {
-      enabled: true
-    }
+      enabled: true,
+    },
   },
 
   modules: [
-    '@nuxt/ui',
-    '@nuxt/eslint',
-    '@nuxt/fonts',
-    '@nuxt/icon',
-    '@nuxt/image'
+    "@nuxt/ui",
+    "@nuxt/eslint",
+    "@nuxt/fonts",
+    "@nuxt/icon",
+    "@nuxt/image",
+    "nuxt-monaco-editor",
   ],
-
-  css: ['~/assets/css/main.css'],
-
-  future: {
-    compatibilityVersion: 4
+  monacoEditor: {
+    locale: "en",
+    componentName: {
+      codeEditor: "MonacoEditor",
+      diffEditor: "MonacoDiffEditor",
+    },
   },
 
-  compatibilityDate: '2024-11-27'
-})
+  css: ["~/assets/css/main.css"],
+
+  future: {
+    compatibilityVersion: 4,
+  },
+
+  compatibilityDate: "2024-11-27",
+});

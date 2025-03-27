@@ -6,9 +6,6 @@ const scriptsDir = path.join(process.cwd(), "public", "uploads");
 
 export default defineEventHandler(async (event) => {
   const filename = getRouterParam(event, "filename");
-
-  console.log("Requested filename:", filename);
-
   if (!filename || filename.includes("..") || filename.includes("/")) {
     throw createError({ statusCode: 400, message: "Invalid filename" });
   }
