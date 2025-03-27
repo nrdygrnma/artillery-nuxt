@@ -182,7 +182,7 @@ const editScript = async (fileItem: FileItem) => {
     },
   );
 
-  if (error.value || !data.value?.content) {
+  if (error.value || !data.value || typeof data.value.content !== "string") {
     showToast("Error", `Could not load content for ${fileItem.name}`, "error");
     return;
   }

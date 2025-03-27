@@ -1,24 +1,19 @@
-import path, { join } from "path";
+import path from "path";
 import fs from "fs/promises";
 import { createError, defineEventHandler, getRouterParam, sendError } from "h3";
 
-const scriptsDir = path.resolve("/public/uploads");
+const scriptsDir = path.join(process.cwd(), "public", "uploads");
 
 export default defineEventHandler(async (event) => {
   const filename = getRouterParam(event, "filename");
 
-  if (
-    (filename && filename.includes("..")) ||
-    (filename && filename.includes("/"))
-  ) {
+  console.log("Requested filename:", filename);
+
+  if (!filename || filename.includes("..") || filename.includes("/")) {
     throw createError({ statusCode: 400, message: "Invalid filename" });
   }
 
-  if (!filename) {
-    throw createError({ statusCode: 400, message: "Filename is required" });
-  }
-
-  const filePath = join(process.cwd(), scriptsDir, filename);
+  const filePath = path.join(scriptsDir, filename);
 
   if (event.method === "GET") {
     try {
@@ -35,8 +30,6 @@ export default defineEventHandler(async (event) => {
   if (event.method === "PUT") {
     try {
       const body = await readBody<{ content: string }>(event);
-
-      console.log(body);
 
       if (typeof body.content !== "string") {
         return sendError(
