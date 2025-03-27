@@ -6,6 +6,7 @@
 
     <UFormField class="mb-6" label="Select File(s)">
       <UInput
+        ref="fileInput"
         v-model="fileInputValue"
         accept=".yaml,.yml"
         aria-describedby="fileHelp"
@@ -18,6 +19,16 @@
       </p>
     </UFormField>
 
+    <div v-if="files.length > 0" class="flex flex-wrap gap-2 mt-4 mb-4">
+      <h3 class="text-sm text-gray-500 w-full">Selected files:</h3>
+      <FileTag
+        v-for="(file, index) in files"
+        :key="index"
+        :name="file.name"
+        @remove="removeFile(index)"
+      />
+    </div>
+
     <UButton
       :disabled="files.length === 0"
       :loading="isUploading"
@@ -26,15 +37,6 @@
     >
       Upload
     </UButton>
-
-    <div v-if="files.length > 0" class="mt-4">
-      <p class="text-sm font-medium text-gray-700 mb-1">Selected Files:</p>
-      <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-        <li v-for="file in files" :key="file.name">
-          {{ file.name }}
-        </li>
-      </ul>
-    </div>
 
     <div
       v-if="isUploading"
@@ -52,6 +54,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { UInput } from "#components";
 import { useFileApi } from "~/composables/useFileApi";
 import { useAppToast } from "~/composables/useAppToast";
 
@@ -60,6 +63,7 @@ const { uploadFilesWithProgress, uploadProgress, isUploading } = useFileApi();
 
 const files = ref<File[]>([]);
 const fileInputValue = ref("");
+const fileInput = ref<InstanceType<typeof UInput> | null>(null);
 
 const emit = defineEmits<{
   (
@@ -87,6 +91,20 @@ const handleUpload = async () => {
     emit("filesUploaded", uploadedFiles);
   }
   resetFileInput();
+};
+
+const removeFile = (index: number) => {
+  files.value.splice(index, 1);
+
+  if (fileInput.value?.inputRef) {
+    fileInput.value.inputRef.value = "";
+
+    if (files.value.length > 0) {
+      const dataTransfer = new DataTransfer();
+      files.value.forEach((file) => dataTransfer.items.add(file));
+      fileInput.value.inputRef.files = dataTransfer.files;
+    }
+  }
 };
 
 const resetFileInput = () => {
