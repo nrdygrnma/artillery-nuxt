@@ -46,11 +46,7 @@ const overlay = useOverlay();
 const nameFilter = ref("");
 const rowSelection = ref({});
 const uploadedFiles = ref<FileItem[]>([]);
-const table = useTemplateRef<any>("table");
-const selectedRows = computed(
-  () => table.value?.tableApi?.getFilteredSelectedRowModel().rows ?? [],
-);
-const selectedRowCount = computed(() => selectedRows.value.length);
+
 const sorting = ref([
   {
     id: "uploadedDate",
