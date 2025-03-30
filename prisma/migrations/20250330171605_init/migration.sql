@@ -1,12 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Script` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-DROP TABLE "Script";
-
 -- CreateTable
 CREATE TABLE "ScriptFile" (
     "id" TEXT NOT NULL,
@@ -17,3 +8,6 @@ CREATE TABLE "ScriptFile" (
 
     CONSTRAINT "ScriptFile_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ScriptFile_filename_key" ON "ScriptFile"("filename");
