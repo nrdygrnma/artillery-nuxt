@@ -6,7 +6,7 @@ export interface ApiResponseBase {
 
 // Response for file listing
 export interface FileListResponse extends ApiResponseBase {
-  files: { filename: string; uploadedDate: string }[];
+  files: { id: string; filename: string; createdAt: string }[];
 }
 
 // Response for a single file operation (upload/delete)

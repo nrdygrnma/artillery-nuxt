@@ -32,11 +32,6 @@ export const useTableUtils = () => {
   }: any) => [
     useSelectionColumn(UCheckbox),
     {
-      accessorKey: "id",
-      header: "#",
-      cell: ({ row }: any) => row.getValue("id"),
-    },
-    {
       accessorKey: "name",
       header: ({ column }: any) =>
         useSortableHeader(column, "Script Name", UButton),
@@ -74,7 +69,7 @@ export const useTableUtils = () => {
 
   const formatDateCell = (row: any) => {
     const date = row.getValue("uploadedDate");
-    return date instanceof Date ? date.toLocaleString() : "Invalid Date";
+    return date ? new Date(date).toLocaleString() : "Invalid Date";
   };
 
   const createActionButton = (

@@ -15,6 +15,7 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/image",
     "nuxt-monaco-editor",
+    "@prisma/nuxt",
   ],
   monacoEditor: {
     locale: "en",

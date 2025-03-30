@@ -1,59 +1,36 @@
-import path from "path";
-import fs from "fs/promises";
-import { createError, defineEventHandler, getRouterParam, sendError } from "h3";
+import { defineEventHandler, getRouterParam, readBody } from "h3";
+import { PrismaClient } from "@prisma/client";
 
-const scriptsDir = path.join(process.cwd(), "public", "uploads");
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
-  const filename = getRouterParam(event, "filename");
-  if (!filename || filename.includes("..") || filename.includes("/")) {
-    throw createError({ statusCode: 400, message: "Invalid filename" });
+  const filename = decodeURIComponent(getRouterParam(event, "filename") ?? "");
+  if (!filename) {
+    throw createError({ statusCode: 400, message: "Filename is required" });
   }
 
-  const filePath = path.join(scriptsDir, filename);
-
   if (event.method === "GET") {
-    try {
-      const content = await fs.readFile(filePath, "utf-8");
-      return { content };
-    } catch (err) {
-      return sendError(
-        event,
-        createError({ statusCode: 404, statusMessage: "File not found." }),
-      );
+    const file = await prisma.scriptFile.findUnique({
+      where: { filename },
+    });
+
+    if (!file) {
+      throw createError({ statusCode: 404, message: "File not found" });
     }
+
+    return { content: file.content };
   }
 
   if (event.method === "PUT") {
-    try {
-      const body = await readBody<{ content: string }>(event);
+    const body = await readBody<{ content: string }>(event);
 
-      if (typeof body.content !== "string") {
-        return sendError(
-          event,
-          createError({
-            statusCode: 400,
-            statusMessage: "Content must be a string.",
-          }),
-        );
-      }
+    const updated = await prisma.scriptFile.update({
+      where: { filename },
+      data: { content: body.content },
+    });
 
-      await fs.writeFile(filePath, body.content, "utf-8");
-
-      return { success: true, message: "File updated successfully." };
-    } catch (err) {
-      return sendError(
-        event,
-        createError({
-          statusCode: 500,
-          statusMessage: "Failed to write file.",
-        }),
-      );
-    }
+    return { success: true, message: "File updated", updated };
   }
 
-  return sendError(
-    event,
-    createError({ statusCode: 405, statusMessage: "Method Not Allowed." }),
-  );
+  throw createError({ statusCode: 405, message: "Method not allowed" });
 });

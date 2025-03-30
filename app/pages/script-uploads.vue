@@ -97,9 +97,9 @@ const {
   transform: (data: FileListResponse) => {
     return (
       data.files.map((file) => ({
-        id: file.filename,
+        id: file.id,
         name: file.filename,
-        uploadedDate: new Date(file.uploadedDate),
+        uploadedDate: new Date(file.createdAt),
       })) || []
     );
   },
@@ -201,7 +201,6 @@ const openEditorModal = async (filename: string, content: string) => {
 
   const result = await modal.open();
   if (result?.confirm && result.content) {
-    console.log(result.content);
     await saveEditedScript(filename, result.content);
   }
 };
